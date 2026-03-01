@@ -202,8 +202,10 @@ export default function Negozi() {
 
   const handleSelectStore = (store) => {
     setSelectedStore(store.id === selectedStore?.id ? null : store);
-    const lat = store.latitude || (userCoords?.lat || 45.46) + (Math.random() - 0.5) * 0.02;
-    const lng = store.longitude || (userCoords?.lng || 9.19) + (Math.random() - 0.5) * 0.02;
+    const idNum = typeof store.id === 'number' ? store.id : [...String(store.id || 0)].reduce((a, c) => a * 31 + c.charCodeAt(0), 0);
+    const hash = Math.abs(idNum * 2654435761) % 1000;
+    const lat = store.latitude || (userCoords?.lat || 45.46) + ((hash % 100) - 50) / 2500;
+    const lng = store.longitude || (userCoords?.lng || 9.19) + (((hash / 10) % 100) - 50) / 2500;
     setFlyTarget({ lat, lng });
   };
 
@@ -299,7 +301,8 @@ export default function Negozi() {
                   {/* Store markers */}
                   {filtered.map((store, idx) => {
                     // Deterministic offset for stores without coordinates
-                    const hash = (store.id || idx) * 2654435761 % 1000;
+                    const idNum = typeof store.id === 'number' ? store.id : [...String(store.id || idx)].reduce((a, c) => a * 31 + c.charCodeAt(0), 0);
+                    const hash = Math.abs(idNum * 2654435761) % 1000;
                     const lat = store.latitude || mapCenter.lat + ((hash % 100) - 50) / 2500;
                     const lng = store.longitude || mapCenter.lng + (((hash / 10) % 100) - 50) / 2500;
                     const isActive = selectedStore?.id === store.id;
