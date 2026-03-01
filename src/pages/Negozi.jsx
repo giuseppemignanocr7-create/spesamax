@@ -137,13 +137,23 @@ export default function Negozi() {
   const [maxDistance, setMaxDistance] = useState(25);
   const [stores, setStores] = useState(STORES);
   const [loading, setLoading] = useState(true);
+  const [cap, setCap] = useState(() => localStorage.getItem('spesamax_cap') || '');
 
   useEffect(() => {
-    api.getStores({ radius: maxDistance })
+    const handler = (e) => setCap(e.detail || localStorage.getItem('spesamax_cap') || '');
+    window.addEventListener('cap:changed', handler);
+    return () => window.removeEventListener('cap:changed', handler);
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    const params = { radius: maxDistance };
+    if (cap) params.cap = cap;
+    api.getStores(params)
       .then(data => { if (data.stores?.length) setStores(data.stores); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [maxDistance]);
+  }, [maxDistance, cap]);
 
   const filtered = stores.filter(s => {
     const q = search.toLowerCase();

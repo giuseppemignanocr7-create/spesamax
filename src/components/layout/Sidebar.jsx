@@ -1,8 +1,9 @@
+import { useState, useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   LayoutDashboard, ShoppingCart, MapPin, BarChart3,
-  Bot, Users, Settings, X, Crown, TrendingUp, Zap
+  Bot, Users, Settings, X, Crown, TrendingUp, Zap, Navigation, Check
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { USER_PROFILE } from '../../data/mockData';
@@ -16,6 +17,88 @@ const NAV_ITEMS = [
   { to: '/community', icon: Users, label: 'Community' },
   { to: '/impostazioni', icon: Settings, label: 'Impostazioni' },
 ];
+
+function CapWidget() {
+  const [cap, setCap] = useState(() => localStorage.getItem('spesamax_cap') || '');
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(cap);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (editing && inputRef.current) inputRef.current.focus();
+  }, [editing]);
+
+  const save = () => {
+    const val = draft.trim();
+    if (val.length === 5 && /^\d{5}$/.test(val)) {
+      setCap(val);
+      localStorage.setItem('spesamax_cap', val);
+      window.dispatchEvent(new CustomEvent('cap:changed', { detail: val }));
+      setEditing(false);
+    }
+  };
+
+  if (!cap && !editing) {
+    return (
+      <div className="px-4 pb-2">
+        <button
+          onClick={() => { setEditing(true); setDraft(''); }}
+          className="w-full flex items-center gap-2.5 p-3 rounded-xl border-2 border-dashed border-brand-300 dark:border-brand-700 bg-brand-50/50 dark:bg-brand-500/5 hover:bg-brand-100 dark:hover:bg-brand-500/10 transition-colors"
+        >
+          <Navigation className="w-5 h-5 text-brand-500" />
+          <div className="text-left">
+            <p className="text-sm font-bold text-brand-700 dark:text-brand-300">Inserisci il tuo CAP</p>
+            <p className="text-[10px] text-brand-500/70 dark:text-brand-400/70">Per trovare negozi e offerte vicino a te</p>
+          </div>
+        </button>
+      </div>
+    );
+  }
+
+  if (editing) {
+    return (
+      <div className="px-4 pb-2">
+        <div className="flex items-center gap-2 p-2 rounded-xl bg-brand-50 dark:bg-brand-500/10 border border-brand-200 dark:border-brand-700/50">
+          <Navigation className="w-4 h-4 text-brand-500 flex-shrink-0" />
+          <input
+            ref={inputRef}
+            type="text"
+            inputMode="numeric"
+            maxLength={5}
+            placeholder="20121"
+            value={draft}
+            onChange={e => setDraft(e.target.value.replace(/\D/g, '').slice(0, 5))}
+            onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setEditing(false); setDraft(cap); } }}
+            className="flex-1 bg-transparent text-sm font-bold text-brand-700 dark:text-brand-300 placeholder-brand-300 dark:placeholder-brand-600 outline-none w-0"
+          />
+          <button
+            onClick={save}
+            disabled={draft.length !== 5}
+            className="p-1.5 rounded-lg bg-brand-500 text-white disabled:opacity-30 hover:bg-brand-600 transition-colors"
+          >
+            <Check className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 pb-2">
+      <button
+        onClick={() => { setEditing(true); setDraft(cap); }}
+        className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl bg-brand-50 dark:bg-brand-500/5 hover:bg-brand-100 dark:hover:bg-brand-500/10 border border-brand-200/50 dark:border-brand-800/30 transition-colors group"
+      >
+        <Navigation className="w-4 h-4 text-brand-500" />
+        <div className="flex-1 text-left">
+          <p className="text-xs text-brand-600/70 dark:text-brand-400/70">La tua zona</p>
+          <p className="text-sm font-extrabold text-brand-700 dark:text-brand-300">{cap}</p>
+        </div>
+        <span className="text-[10px] font-semibold text-brand-500 opacity-0 group-hover:opacity-100 transition-opacity">Cambia</span>
+      </button>
+    </div>
+  );
+}
 
 export default function Sidebar({ isOpen, onClose }) {
   const { user } = useAuth();
@@ -96,6 +179,9 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
           </div>
         </div>
+
+        {/* CAP selector */}
+        <CapWidget />
 
         {/* Navigation */}
         <nav className="flex-1 px-4 space-y-1 overflow-y-auto">
