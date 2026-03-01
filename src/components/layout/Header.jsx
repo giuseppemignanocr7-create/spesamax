@@ -1,16 +1,36 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Bell, Moon, Sun, Menu, X, ShoppingCart,
   TrendingDown, Users, ChevronDown
 } from 'lucide-react';
+import api from '../../services/api';
 import { NOTIFICATIONS } from '../../data/mockData';
 
 export default function Header({ isDark, onToggleTheme, onMenuClick }) {
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [notifOpen, setNotifOpen] = useState(false);
-  const unreadCount = NOTIFICATIONS.filter(n => !n.read).length;
+  const [notifications, setNotifications] = useState(NOTIFICATIONS);
+  const [unreadCount, setUnreadCount] = useState(NOTIFICATIONS.filter(n => !n.read).length);
+
+  useEffect(() => {
+    api.getNotifications()
+      .then(data => {
+        if (data.notifications?.length) {
+          setNotifications(data.notifications.map(n => ({
+            id: n.id,
+            type: n.type === 'price_alert' ? 'price_drop' : n.type === 'offer_expiring' ? 'offer_ending' : n.type,
+            title: n.title,
+            message: n.message,
+            time: new Date(n.created_at).toLocaleString('it-IT', { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }),
+            read: !!n.is_read,
+          })));
+          setUnreadCount(data.unreadCount || 0);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <header className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-gray-200/50 dark:border-white/5 bg-white/80 dark:bg-surface-800/80 backdrop-blur-xl z-30">
@@ -102,7 +122,7 @@ export default function Header({ isDark, onToggleTheme, onMenuClick }) {
                     <span className="badge-green">{unreadCount} nuove</span>
                   </div>
                   <div className="max-h-80 overflow-y-auto space-y-1">
-                    {NOTIFICATIONS.map(notif => (
+                    {notifications.map(notif => (
                       <div
                         key={notif.id}
                         className={`p-3 rounded-xl transition-colors cursor-pointer ${

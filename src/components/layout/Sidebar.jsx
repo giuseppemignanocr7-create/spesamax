@@ -4,6 +4,7 @@ import {
   LayoutDashboard, ShoppingCart, MapPin, BarChart3,
   Bot, Users, Settings, X, Crown, TrendingUp, Zap
 } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
 import { USER_PROFILE } from '../../data/mockData';
 
 const NAV_ITEMS = [
@@ -17,6 +18,14 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar({ isOpen, onClose }) {
+  const { user } = useAuth();
+  const profile = user || USER_PROFILE;
+  const displayName = user ? `${user.name} ${user.surname}` : `${USER_PROFILE.name} ${USER_PROFILE.surname}`;
+  const initials = user ? `${user.name[0]}${user.surname[0]}` : `${USER_PROFILE.name[0]}${USER_PROFILE.surname[0]}`;
+  const isPremium = user ? user.plan === 'premium' : USER_PROFILE.isPremium;
+  const totalSavings = user?.total_savings ?? USER_PROFILE.totalSavings;
+  const monthlySavings = user?.monthly_savings ?? USER_PROFILE.monthlySavings;
+
   return (
     <>
       {/* Mobile overlay */}
@@ -67,14 +76,14 @@ export default function Sidebar({ isOpen, onClose }) {
         <div className="px-4 py-4">
           <div className="glass-card p-3 flex items-center gap-3">
             <div className="w-10 h-10 rounded-full gradient-brand flex items-center justify-center text-white font-bold text-sm">
-              {USER_PROFILE.name[0]}{USER_PROFILE.surname[0]}
+              {initials}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                {USER_PROFILE.name} {USER_PROFILE.surname}
+                {displayName}
               </p>
               <div className="flex items-center gap-1.5">
-                {USER_PROFILE.isPremium && (
+                {isPremium && (
                   <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-600 dark:text-amber-400">
                     <Crown className="w-3 h-3" /> Premium
                   </span>
@@ -83,7 +92,7 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
             <div className="text-right">
               <p className="text-xs text-gray-500 dark:text-gray-400">Risparmiati</p>
-              <p className="text-sm font-bold text-brand-600 dark:text-brand-400">€{USER_PROFILE.totalSavings}</p>
+              <p className="text-sm font-bold text-brand-600 dark:text-brand-400">€{totalSavings}</p>
             </div>
           </div>
         </div>
@@ -114,10 +123,10 @@ export default function Sidebar({ isOpen, onClose }) {
               <span className="text-xs font-semibold text-brand-700 dark:text-brand-300">Questo mese</span>
             </div>
             <p className="text-2xl font-extrabold text-brand-700 dark:text-brand-300">
-              €{USER_PROFILE.monthlySavings}
+              €{monthlySavings}
             </p>
             <p className="text-xs text-brand-600/70 dark:text-brand-400/70 mt-1">
-              risparmiati su {USER_PROFILE.listsCount} liste
+              risparmiati questo mese
             </p>
           </div>
         </div>

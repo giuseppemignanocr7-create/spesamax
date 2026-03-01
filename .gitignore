@@ -22,3 +22,10 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.vercel
+
+# Server
+server/.env
+server/db/*.db
+server/node_modules

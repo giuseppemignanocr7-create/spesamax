@@ -5,6 +5,7 @@ import {
   ShoppingCart, Tag, Clock, ArrowDownRight, Mic, Paperclip,
   ThumbsUp, ThumbsDown, Copy, RotateCcw
 } from 'lucide-react';
+import api from '../services/api';
 import { AI_SUGGESTIONS } from '../data/mockData';
 
 const CHAT_HISTORY = [
@@ -128,7 +129,16 @@ export default function AiAssistant() {
     }
   }, [messages]);
 
-  const handleSend = () => {
+  const [conversationId, setConversationId] = useState(null);
+  const [suggestions, setSuggestions] = useState(AI_SUGGESTIONS);
+
+  useEffect(() => {
+    api.getAISuggestions()
+      .then(data => { if (data.suggestions?.length) setSuggestions(data.suggestions); })
+      .catch(() => {});
+  }, []);
+
+  const handleSend = async () => {
     if (!input.trim()) return;
     const userMsg = {
       id: messages.length + 1,
@@ -140,17 +150,28 @@ export default function AiAssistant() {
     setInput('');
     setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      const result = await api.chatWithAI(input, conversationId);
+      if (result.conversationId) setConversationId(result.conversationId);
       const aiMsg = {
         id: messages.length + 2,
         role: 'assistant',
-        content: 'Ho analizzato la tua richiesta. Ecco cosa ho trovato:\n\n**Basandomi sui dati attuali**, posso confermare che questa settimana ci sono diverse opportunità di risparmio nella tua zona. Ti consiglio di concentrare gli acquisti tra **Esselunga** e **Lidl** per massimizzare le offerte attive.\n\nVuoi che prepari un piano dettagliato?',
+        content: result.message.content,
         timestamp: new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
-        savings: 5.20,
+        savings: result.message.savings,
       };
       setMessages(prev => [...prev, aiMsg]);
+    } catch {
+      const aiMsg = {
+        id: messages.length + 2,
+        role: 'assistant',
+        content: 'Mi dispiace, c\'è stato un problema di connessione. Riprova tra qualche istante.',
+        timestamp: new Date().toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages(prev => [...prev, aiMsg]);
+    } finally {
       setIsTyping(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -254,7 +275,7 @@ export default function AiAssistant() {
               <h3 className="text-sm font-bold text-gray-900 dark:text-white">Suggerimenti Attivi</h3>
             </div>
             <div className="space-y-3">
-              {AI_SUGGESTIONS.map((sug, i) => (
+              {suggestions.map((sug, i) => (
                 <motion.div
                   key={sug.id}
                   initial={{ opacity: 0, x: 20 }}

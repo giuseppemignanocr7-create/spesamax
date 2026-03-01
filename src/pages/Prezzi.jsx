@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   BarChart3, Search, Filter, TrendingDown, TrendingUp,
@@ -8,6 +8,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer
 } from 'recharts';
+import api from '../services/api';
 import { PRODUCTS, PRICES, STORES, PRICE_HISTORY } from '../data/mockData';
 
 function getProductPrices(productId) {
@@ -207,8 +208,21 @@ export default function Prezzi() {
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [onlyOffers, setOnlyOffers] = useState(false);
+  const [apiProducts, setApiProducts] = useState(null);
+  const [storesCount, setStoresCount] = useState(STORES.length);
 
-  let filtered = PRODUCTS.filter(p =>
+  useEffect(() => {
+    api.getProducts({ limit: 100 })
+      .then(data => { if (data.products?.length) setApiProducts(data.products); })
+      .catch(() => {});
+    api.getStores()
+      .then(data => { if (data.stores?.length) setStoresCount(data.stores.length); })
+      .catch(() => {});
+  }, []);
+
+  const products = apiProducts || PRODUCTS;
+
+  let filtered = products.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()) ||
     p.brand.toLowerCase().includes(search.toLowerCase()) ||
     p.category.toLowerCase().includes(search.toLowerCase())
