@@ -28,6 +28,16 @@ function PriceComparisonRow({ product, index }) {
   const [expanded, setExpanded] = useState(false);
   const [tracked, setTracked] = useState(!!history);
 
+  const toggleAlert = async (e) => {
+    e.stopPropagation();
+    setTracked(!tracked);
+    try {
+      if (!tracked) {
+        await api.createAlert({ product_id: product.id, alert_type: 'any_drop' });
+      }
+    } catch {}
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -91,12 +101,13 @@ function PriceComparisonRow({ product, index }) {
 
         {/* Track button */}
         <button
-          onClick={(e) => { e.stopPropagation(); setTracked(!tracked); }}
+          onClick={toggleAlert}
           className={`p-2 rounded-lg transition-all ${
             tracked
               ? 'text-amber-500 bg-amber-50 dark:bg-amber-900/20'
               : 'text-gray-300 dark:text-gray-600 hover:text-amber-400'
           }`}
+          title={tracked ? 'Alert attivo' : 'Attiva alert prezzo'}
         >
           {tracked ? <Bell className="w-4 h-4 fill-current" /> : <BellPlus className="w-4 h-4" />}
         </button>
@@ -230,9 +241,15 @@ export default function Prezzi() {
 
   if (onlyOffers) {
     filtered = filtered.filter(p =>
-      PRICES.some(pp => pp.productId === p.id && pp.offerPrice)
+      p.has_offer || p.best_offer_price || PRICES.some(pp => pp.productId === p.id && pp.offerPrice)
     );
   }
+
+  // Sort
+  if (sortBy === 'price_asc') filtered.sort((a, b) => (a.best_price || 99) - (b.best_price || 99));
+  else if (sortBy === 'price_desc') filtered.sort((a, b) => (b.best_price || 0) - (a.best_price || 0));
+  else if (sortBy === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name));
+  else if (sortBy === 'brand') filtered.sort((a, b) => a.brand.localeCompare(b.brand));
 
   return (
     <div className="max-w-[1600px] mx-auto">
@@ -240,7 +257,7 @@ export default function Prezzi() {
         <div>
           <h1 className="text-2xl font-extrabold text-gray-900 dark:text-white">Confronto Prezzi</h1>
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-            {filtered.length} prodotti · {STORES.length} negozi monitorati
+            {filtered.length} prodotti · {storesCount} negozi monitorati
           </p>
         </div>
       </div>
@@ -269,10 +286,16 @@ export default function Prezzi() {
             <Tag className="w-4 h-4" />
             Solo Offerte
           </button>
-          <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-white/10 transition-all">
-            <ArrowUpDown className="w-4 h-4" />
-            Ordina
-          </button>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-white/10 focus:ring-2 focus:ring-brand-500/30"
+          >
+            <option value="name">Nome A-Z</option>
+            <option value="brand">Marca A-Z</option>
+            <option value="price_asc">Prezzo crescente</option>
+            <option value="price_desc">Prezzo decrescente</option>
+          </select>
         </div>
       </div>
 

@@ -1,9 +1,11 @@
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { TrendingUp, ArrowRight, MapPin, Clock, ShoppingBag, Sparkles } from 'lucide-react';
 import { useAnimatedCounter } from '../../hooks/useAnimatedCounter';
 import { OPTIMIZED_CART, WEEKLY_STATS } from '../../data/mockData';
 
 export default function HeroSavings() {
+  const navigate = useNavigate();
   const savings = useAnimatedCounter(OPTIMIZED_CART.savings, 2000);
   const percent = useAnimatedCounter(OPTIMIZED_CART.savingsPercent, 2000, 1);
 
@@ -72,13 +74,13 @@ export default function HeroSavings() {
 
         {/* CTA */}
         <div className="flex flex-col sm:flex-row gap-3">
-          <button className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white text-brand-700 font-bold shadow-lg hover:shadow-xl hover:bg-white/95 active:scale-[0.98] transition-all duration-200">
+          <button onClick={() => navigate('/liste')} className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white text-brand-700 font-bold shadow-lg hover:shadow-xl hover:bg-white/95 active:scale-[0.98] transition-all duration-200">
             Vedi Piano Completo
             <ArrowRight className="w-4 h-4" />
           </button>
-          <button className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/15 backdrop-blur-sm text-white font-semibold border border-white/20 hover:bg-white/25 active:scale-[0.98] transition-all duration-200">
+          <button onClick={() => navigate('/negozi')} className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-white/15 backdrop-blur-sm text-white font-semibold border border-white/20 hover:bg-white/25 active:scale-[0.98] transition-all duration-200">
             <MapPin className="w-4 h-4" />
-            Avvia Navigazione
+            Vedi Negozi
           </button>
         </div>
 

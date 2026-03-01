@@ -100,13 +100,13 @@ function ChatMessage({ message, index }) {
           <span className="text-[10px] text-gray-400">{message.timestamp}</span>
           {!isUser && (
             <div className="flex items-center gap-1">
-              <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-white/5 text-gray-300 hover:text-gray-500 transition-colors">
+              <button onClick={() => { const el = document.activeElement; el?.classList.add('text-green-500'); setTimeout(() => el?.classList.remove('text-green-500'), 1000); }} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-white/5 text-gray-300 hover:text-green-500 transition-colors" title="Utile">
                 <ThumbsUp className="w-3 h-3" />
               </button>
-              <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-white/5 text-gray-300 hover:text-gray-500 transition-colors">
+              <button onClick={() => { const el = document.activeElement; el?.classList.add('text-red-500'); setTimeout(() => el?.classList.remove('text-red-500'), 1000); }} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-white/5 text-gray-300 hover:text-red-500 transition-colors" title="Non utile">
                 <ThumbsDown className="w-3 h-3" />
               </button>
-              <button className="p-1 rounded hover:bg-gray-100 dark:hover:bg-white/5 text-gray-300 hover:text-gray-500 transition-colors">
+              <button onClick={() => { navigator.clipboard.writeText(message.content.replace(/\*\*/g, '')); }} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-white/5 text-gray-300 hover:text-gray-500 transition-colors" title="Copia">
                 <Copy className="w-3 h-3" />
               </button>
             </div>
@@ -193,7 +193,7 @@ export default function AiAssistant() {
                 </div>
               </div>
             </div>
-            <button className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400">
+            <button onClick={() => { setMessages(CHAT_HISTORY); setConversationId(null); }} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 hover:text-brand-500 transition-colors" title="Nuova conversazione">
               <RotateCcw className="w-4 h-4" />
             </button>
           </div>
@@ -240,9 +240,6 @@ export default function AiAssistant() {
           {/* Input */}
           <div className="px-5 py-4 border-t border-gray-200/50 dark:border-white/5">
             <div className="flex items-center gap-3">
-              <button className="p-2.5 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 transition-colors">
-                <Paperclip className="w-5 h-5" />
-              </button>
               <div className="flex-1 relative">
                 <input
                   type="text"
@@ -252,9 +249,6 @@ export default function AiAssistant() {
                   onKeyDown={(e) => e.key === 'Enter' && handleSend()}
                   className="input-field pr-12 text-sm"
                 />
-                <button className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/5 text-gray-400 transition-colors">
-                  <Mic className="w-4 h-4" />
-                </button>
               </div>
               <button
                 onClick={handleSend}

@@ -1,15 +1,28 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Search, Bell, Moon, Sun, Menu, X, ShoppingCart,
-  TrendingDown, Users, ChevronDown
+  TrendingDown, Users, ChevronDown, CheckCheck
 } from 'lucide-react';
 import api from '../../services/api';
 import { NOTIFICATIONS } from '../../data/mockData';
 
+const SEARCH_ROUTES = [
+  { keywords: ['dashboard', 'home', 'risparmio', 'panoramica'], route: '/', label: 'Dashboard' },
+  { keywords: ['lista', 'liste', 'spesa', 'carrello', 'cart'], route: '/liste', label: 'Liste Spesa' },
+  { keywords: ['negozi', 'negozio', 'store', 'mappa', 'indicazioni'], route: '/negozi', label: 'Negozi' },
+  { keywords: ['prezzi', 'prezzo', 'confronta', 'offerte', 'offerta', 'sconto'], route: '/prezzi', label: 'Prezzi' },
+  { keywords: ['ai', 'assistente', 'intelligenza', 'chat', 'suggerimenti'], route: '/ai', label: 'AI Assistant' },
+  { keywords: ['community', 'segnala', 'classifica', 'contributi'], route: '/community', label: 'Community' },
+  { keywords: ['impostazioni', 'settings', 'profilo', 'account', 'tema'], route: '/impostazioni', label: 'Impostazioni' },
+];
+
 export default function Header({ isDark, onToggleTheme, onMenuClick }) {
+  const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState(NOTIFICATIONS);
   const [unreadCount, setUnreadCount] = useState(NOTIFICATIONS.filter(n => !n.read).length);
@@ -31,6 +44,32 @@ export default function Header({ isDark, onToggleTheme, onMenuClick }) {
       })
       .catch(() => {});
   }, []);
+
+  // Search
+  useEffect(() => {
+    if (!searchQuery.trim()) { setSearchResults([]); return; }
+    const q = searchQuery.toLowerCase();
+    const matches = SEARCH_ROUTES.filter(r => r.keywords.some(k => k.includes(q)) || r.label.toLowerCase().includes(q));
+    setSearchResults(matches);
+  }, [searchQuery]);
+
+  const handleSearchNav = (route) => {
+    navigate(route);
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  const handleMarkRead = async (id) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setUnreadCount(prev => Math.max(0, prev - 1));
+    try { await api.markNotificationRead(id); } catch {}
+  };
+
+  const handleMarkAllRead = async () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setUnreadCount(0);
+    try { await api.markAllNotificationsRead(); } catch {}
+  };
 
   return (
     <header className="h-16 flex items-center justify-between px-4 lg:px-6 border-b border-gray-200/50 dark:border-white/5 bg-white/80 dark:bg-surface-800/80 backdrop-blur-xl z-30">
@@ -54,11 +93,21 @@ export default function Header({ isDark, onToggleTheme, onMenuClick }) {
           />
           {searchQuery && (
             <button
-              onClick={() => setSearchQuery('')}
+              onClick={() => { setSearchQuery(''); setSearchResults([]); }}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
             >
               <X className="w-4 h-4" />
             </button>
+          )}
+          {/* Search results dropdown */}
+          {searchResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 glass-card p-1 shadow-xl z-50">
+              {searchResults.map(r => (
+                <button key={r.route} onClick={() => handleSearchNav(r.route)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-brand-500/10 text-sm text-gray-700 dark:text-gray-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors">
+                  Vai a <strong>{r.label}</strong>
+                </button>
+              ))}
+            </div>
           )}
         </div>
 
@@ -119,12 +168,20 @@ export default function Header({ isDark, onToggleTheme, onMenuClick }) {
                 >
                   <div className="flex items-center justify-between px-3 py-2 mb-1">
                     <h3 className="text-sm font-bold text-gray-900 dark:text-white">Notifiche</h3>
-                    <span className="badge-green">{unreadCount} nuove</span>
+                    <div className="flex items-center gap-2">
+                      {unreadCount > 0 && (
+                        <button onClick={handleMarkAllRead} className="flex items-center gap-1 text-[10px] font-semibold text-brand-600 dark:text-brand-400 hover:text-brand-700 transition-colors" title="Segna tutto come letto">
+                          <CheckCheck className="w-3 h-3" /> Letto
+                        </button>
+                      )}
+                      <span className="badge-green">{unreadCount} nuove</span>
+                    </div>
                   </div>
                   <div className="max-h-80 overflow-y-auto space-y-1">
                     {notifications.map(notif => (
                       <div
                         key={notif.id}
+                        onClick={() => !notif.read && handleMarkRead(notif.id)}
                         className={`p-3 rounded-xl transition-colors cursor-pointer ${
                           notif.read
                             ? 'hover:bg-gray-50 dark:hover:bg-white/5'
